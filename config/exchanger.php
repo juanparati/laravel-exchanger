@@ -45,6 +45,6 @@ return [
     */
     'cache_time'       => null,                 // Cache time in seconds (null = no cache).
     'cache_store'      => 'default',            // Cache store to use.
-    'cache_key'        => 'Exchanger:Currency', // Cache key where currencies are storage.
+    'cache_prefix'     => 'Exchanger:Currency', // Cache prefix.
 
 ];

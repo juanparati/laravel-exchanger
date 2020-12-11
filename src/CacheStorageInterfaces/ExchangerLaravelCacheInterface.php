@@ -4,6 +4,7 @@
 namespace Juanparati\LaravelExchanger\CacheStorageInterfaces;
 
 
+use Illuminate\Contracts\Cache\Repository as Cache;
 use Kevinrob\GuzzleCache\CacheEntry;
 use Kevinrob\GuzzleCache\Storage\LaravelCacheStorage;
 
@@ -22,6 +23,53 @@ class ExchangerLaravelCacheInterface extends LaravelCacheStorage
      * @var int
      */
     protected $defaultCacheTime = 0;
+
+
+    /**
+     * Cache prefix.
+     *
+     * @var string
+     */
+    protected $cachePrefix = '';
+
+
+    /**
+     * ExchangerLaravelCacheInterface constructor.
+     *
+     * @param Cache $cache
+     * @param string $cachePrefix
+     */
+    public function __construct(Cache $cache, string $cachePrefix = '')
+    {
+        $this->cachePrefix = $cachePrefix;
+
+        parent::__construct($cache);
+    }
+
+
+    /**
+     * Fetch data from cache.
+     *
+     * @param string $key.
+     * @return CacheEntry|void|null
+     */
+    public function fetch($key)
+    {
+        return parent::fetch($this->cachePrefix . $key);
+    }
+
+
+    /**
+     * Save data in cache.
+     *
+     * @param string $key
+     * @param CacheEntry $data
+     * @return bool
+     */
+    public function save($key, CacheEntry $data)
+    {
+        return parent::save($this->cachePrefix . $key, $data);
+    }
 
 
     /**

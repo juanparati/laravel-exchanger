@@ -93,8 +93,12 @@ class ExchangerConverter
         $cacheStrategy = new DelegatingCacheStrategy(new NullCacheStrategy());
 
         if ($this->config['cache_time']) {
-            $cacheInterface = (new ExchangerLaravelCacheInterface(Cache::store($this->config['cache_store'])))
-                ->setDefaultCacheTime($this->config['cache_time']);
+            $cacheInterface = (
+                new ExchangerLaravelCacheInterface(
+                    Cache::store($this->config['cache_store']),
+                    $this->config['cache_prefix'] ?? ''
+                )
+            )->setDefaultCacheTime($this->config['cache_time']);
 
             $cacheStrategy->registerRequestMatcher($this->cacheMatcher, new PrivateCacheStrategy($cacheInterface));
         }
