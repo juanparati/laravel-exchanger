@@ -1,3 +1,5 @@
+![](https://api.travis-ci.com/juanparati/laravel-exchanger.svg?branch=master)
+
 # Laravel-Exchanger
 
 A Laravel currency converter library that uses [florianv/exchanger](https://github.com/florianv/exchanger).
