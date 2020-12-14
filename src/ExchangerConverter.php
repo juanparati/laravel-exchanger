@@ -93,6 +93,9 @@ class ExchangerConverter
         $cacheStrategy = new DelegatingCacheStrategy(new NullCacheStrategy());
 
         if ($this->config['cache_time']) {
+
+            $this->cacheMatcher->setCacheStatus(true);
+
             $cacheInterface = (
                 new ExchangerLaravelCacheInterface(
                     Cache::store($this->config['cache_store']),
