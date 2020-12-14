@@ -5,6 +5,7 @@ namespace Juanparati\LaravelExchanger\Facades;
 
 
 use Illuminate\Support\Facades\Facade;
+use Juanparati\LaravelExchanger\ExchangerConverter;
 
 
 /**
@@ -16,6 +17,6 @@ class ExchangerConverterFacade extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'exchanger';
+        return ExchangerConverter::class;
     }
 }
