@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Facades;
+namespace Juanparati\LaravelExchanger\Facades;
 
 
 use Illuminate\Support\Facades\Facade;

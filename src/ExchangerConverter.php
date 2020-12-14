@@ -73,9 +73,9 @@ class ExchangerConverter
     /**
      * The last exchange rate result.
      *
-     * @var ExchangeRate
+     * @var ExchangeRate|null
      */
-    protected $lastRateRequestResult;
+    protected $lastRateRequestResult = null;
 
 
     /**
