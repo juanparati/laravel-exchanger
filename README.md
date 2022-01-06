@@ -13,7 +13,7 @@ Facade registration (optional):
 
     'aliases' => [
         ...
-        'CurrencyExchanger' => \Juanparati\LaravelExchanger\Facades\ExchangeConverterFacade,
+        'CurrencyExchanger' => \Juanparati\LaravelExchanger\Facades\ExchangerConverterFacade,
         ...
     ]
 
