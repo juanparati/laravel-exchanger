@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
+
 namespace Juanparati\LaravelExchanger\Tests\Unit;
 
-use Exchanger\Service\ExchangeRatesApi;
+use Exchanger\Service\Fixer;
 use Illuminate\Support\Carbon;
 use Juanparati\LaravelExchanger\ExchangerConverter;
 use Juanparati\LaravelExchanger\Providers\ExchangerServiceProvider;
@@ -37,7 +39,7 @@ class ExchangeConverterTest extends TestCase
     protected function getEnvironmentSetUp($app) {
         $app['config']->set('exchanger.services', [
             \Exchanger\Service\EuropeanCentralBank::class   => [],
-            \Exchanger\Service\ExchangeRatesApi::class      => [],
+            \Exchanger\Service\Fixer::class                 => ['access_key' => env('FIXER_KEY'), 'enterprise' => true],
             \Exchanger\Service\NationalBankOfRomania::class => [],
         ]);
     }
@@ -59,7 +61,7 @@ class ExchangeConverterTest extends TestCase
         $eurToDkk = $exchanger->convert('eur', 'dkk', 1);
         $this->assertGreaterThan(0, $eurToDkk);
 
-        // Test DKK to EUR (Exchange Rates Api)
+        // Test DKK to EUR (FIXER)
         $this->assertEquals(1, round($exchanger->convert('dkk', 'eur', $eurToDkk)));
 
         // Test RON to DKK
@@ -71,7 +73,7 @@ class ExchangeConverterTest extends TestCase
 
         // Test historical PLN to NOK
         $this->assertEquals(
-            3 * 0.4725302061,
+            1.4158950000000001,
             $exchanger->convert('nok', 'pln', 3, Carbon::createFromDate(2015, 4, 20))
         );
     }
@@ -89,7 +91,7 @@ class ExchangeConverterTest extends TestCase
         $this->assertGreaterThan(0, $exchanger->getRate('eur', 'pln')->getValue());
         $this->assertEquals('european_central_bank', $exchanger->getLastExchangeRateResult()->getProviderName());
 
-        $exchanger->detach(ExchangeRatesApi::class);
+        $exchanger->detach(Fixer::class);
 
         $this->assertGreaterThan(0, $exchanger->getRate('ron', 'pln')->getValue());
         $this->assertEquals('national_bank_of_romania', $exchanger->getLastExchangeRateResult()->getProviderName());
@@ -113,12 +115,11 @@ class ExchangeConverterTest extends TestCase
 
         $exchanger->detachAll();
 
-        $exchanger->attach(ExchangeRatesApi::class);
+        $exchanger->attach(Fixer::class);
 
         $rate = $exchanger->getRate('pln', 'sek');
 
         $this->assertGreaterThan(0, $rate->getValue());
-        $this->assertEquals('exchange_rates_api', $rate->getProviderName());
+        $this->assertEquals('fixer', $rate->getProviderName());
     }
-
 }
