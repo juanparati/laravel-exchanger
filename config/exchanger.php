@@ -19,6 +19,7 @@ return [
     |
     */
     'services' => [
+        \Exchanger\Service\ExchangerateHost::class            => [],
         \Exchanger\Service\Fixer::class                       => ['access_key' => '', 'enterprise' => true],
         // \Exchanger\Service\CurrencyLayer::class               => ['access_key' => 'access_key', 'enterprise' => false],
         // \Exchanger\Service\CoinLayer::class                   => ['access_key' => 'access_key', 'paid' => false],
@@ -27,7 +28,7 @@ return [
         \Exchanger\Service\NationalBankOfRomania::class       => [],
         \Exchanger\Service\CentralBankOfRepublicTurkey::class => [],
         \Exchanger\Service\CentralBankOfCzechRepublic::class  => [],
-        \Exchanger\Service\RussianCentralBank::class          => [],
+        // \Exchanger\Service\RussianCentralBank::class          => [],
         // \Exchanger\Service\Forge::class                       => ['api_key' => 'api_key'],
         // \Exchanger\Service\Cryptonator::class                 => [],
         // \Exchanger\Service\CurrencyDataFeed::class            => ['api_key' => 'api_key'],
