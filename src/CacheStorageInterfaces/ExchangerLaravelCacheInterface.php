@@ -19,18 +19,8 @@ class ExchangerLaravelCacheInterface extends LaravelCacheStorage
 
     /**
      * Cache time in seconds.
-     *
-     * @var int
      */
-    protected $defaultCacheTime = 0;
-
-
-    /**
-     * Cache prefix.
-     *
-     * @var string
-     */
-    protected $cachePrefix = '';
+    protected int $defaultCacheTime = 0;
 
 
     /**
@@ -39,10 +29,8 @@ class ExchangerLaravelCacheInterface extends LaravelCacheStorage
      * @param Cache $cache
      * @param string $cachePrefix
      */
-    public function __construct(Cache $cache, string $cachePrefix = '')
+    public function __construct(Cache $cache, protected string $cachePrefix = '')
     {
-        $this->cachePrefix = $cachePrefix;
-
         parent::__construct($cache);
     }
 
@@ -66,7 +54,7 @@ class ExchangerLaravelCacheInterface extends LaravelCacheStorage
      * @param CacheEntry $data
      * @return bool
      */
-    public function save($key, CacheEntry $data)
+    public function save($key, CacheEntry $data): bool
     {
         return parent::save($this->cachePrefix . $key, $data);
     }
