@@ -18,16 +18,16 @@ class ExchangerRequestMatcher implements RequestMatcherInterface
      *
      * @var bool
      */
-    protected $useCache = false;
+    protected bool $useCache = false;
 
 
     /**
      * Decides when to use the cache.
      *
      * @param RequestInterface $request
-     * @return bool|void
+     * @return bool
      */
-    public function matches(RequestInterface $request)
+    public function matches(RequestInterface $request) : bool
     {
         return $this->getCacheStatus();
     }

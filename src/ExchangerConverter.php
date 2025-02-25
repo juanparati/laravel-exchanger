@@ -32,34 +32,27 @@ class ExchangerConverter
 {
 
     /**
-     * Default configuration.
-     *
-     * @var array
-     */
-    protected $config = [];
-
-
-    /**
      * HTTP Client.
      *
      * @var Client
      */
-    protected $httpClient;
+    protected Client $httpClient;
 
 
     /**
      * Service list
+     *
      * @var Service[]
      */
-    protected $serviceList = [];
+    protected array $serviceList = [];
 
 
     /**
      * Chain of services.
      *
-     * @var Chain
+     * @var Chain|null
      */
-    protected $exchanger;
+    protected ?Chain $exchanger = null;
 
 
     /**
@@ -67,7 +60,7 @@ class ExchangerConverter
      *
      * @var ExchangerRequestMatcher
      */
-    protected $cacheMatcher;
+    protected ExchangerRequestMatcher $cacheMatcher;
 
 
     /**
@@ -75,30 +68,28 @@ class ExchangerConverter
      *
      * @var ExchangeRate|null
      */
-    protected $lastRateRequestResult = null;
+    protected ?ExchangeRate $lastRateRequestResult = null;
 
 
     /**
      * Conversion constructor.
      *
-     * @param array|null $config
+     * @param array $config
      */
-    public function __construct(array $config = null)
+    public function __construct(protected array $config = [])
     {
-        $this->config = $config;
-
         // Prepare cache
         $this->cacheMatcher = new ExchangerRequestMatcher();
 
         $cacheStrategy = new DelegatingCacheStrategy(new NullCacheStrategy());
 
-        if ($this->config['cache_time']) {
+        if ($this->config['cache_time'] ?? null) {
 
             $this->cacheMatcher->setCacheStatus(true);
 
             $cacheInterface = (
                 new ExchangerLaravelCacheInterface(
-                    Cache::store($this->config['cache_store']),
+                    Cache::store($this->config['cache_store'] ?? config('cache.default')),
                     $this->config['cache_prefix'] ?? ''
                 )
             )->setDefaultCacheTime($this->config['cache_time']);
@@ -110,7 +101,6 @@ class ExchangerConverter
         $stack->push(new CacheMiddleware($cacheStrategy), 'cache');
 
         // Initialize HTTP client.
-        // $this->httpClient = Http::withOptions(['handler' => $stack])->buildClient();
         $this->httpClient = new Client(['handler' => $stack]);
     }
 
@@ -122,7 +112,7 @@ class ExchangerConverter
      * @param string $toCurrency
      * @param $value
      * @param \DateTimeInterface|null $rateDate
-     * @return float|int
+     * @return float
      * @throws \Exchanger\Exception\ChainException
      * @throws \Throwable
      */
@@ -131,9 +121,9 @@ class ExchangerConverter
         string $toCurrency,
         $value,
         \DateTimeInterface $rateDate = null
-    ) {
+    ): float
+    {
         $rate = $this->getRate($fromCurrency, $toCurrency, $rateDate);
-
         return $rate->getValue() * $value;
     }
 
@@ -159,8 +149,6 @@ class ExchangerConverter
 
         if ($rateDate)
             $query = $query->setDate($rateDate);
-
-        $rate = null;
 
         $this->lastRateRequestResult = $this->executeQuery($query->build());
 
@@ -228,11 +216,10 @@ class ExchangerConverter
         return $this;
     }
 
-
     /**
      * Attach one or more services.
      *
-     * @param string ...$services
+     * @param mixed ...$services
      * @return $this
      * @throws \Throwable
      */
@@ -263,7 +250,7 @@ class ExchangerConverter
     /**
      * Detach one or more services.
      *
-     * @param string ...$services
+     * @param mixed ...$services
      * @return ExchangerConverter
      */
     public function detach(...$services) : ExchangerConverter

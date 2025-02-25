@@ -96,9 +96,9 @@ class ExchangeConverterTest extends TestCase
         $this->assertGreaterThan(0, $exchanger->getRate('ron', 'pln')->getValue());
         $this->assertEquals('national_bank_of_romania', $exchanger->getLastExchangeRateResult()->getProviderName());
 
-        $this->assertEquals(1.2043, $exchanger->getRate(
+        $this->assertEquals(1.0892, $exchanger->getRate(
             'eur', 'usd',
-            Carbon::createFromDate(2015, 1, 2)
+            Carbon::createFromDate(2024, 3, 15)
         )->getValue());
 
     }
