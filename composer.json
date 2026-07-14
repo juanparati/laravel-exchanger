@@ -15,7 +15,7 @@
         "illuminate/cache": "^13",
         "illuminate/support": "^13",
         "php-http/guzzle7-adapter": "^0.1.1",
-        "florianv/exchanger": "^2.8",
+        "florianv/exchanger": "^2.9",
         "kevinrob/guzzle-cache-middleware": "^7.0",
         "guzzlehttp/promises": "^2.0"
     },
@@ -27,10 +27,10 @@
         "laravel": {
             "providers": [
                 "Juanparati\\LaravelExchanger\\Providers\\ExchangerServiceProvider"
-            ]
-        },
-        "aliases": {
-            "Exchanger": "Juanparati\\LaravelExchanger\\Facades\\ExchangeConverter"
+            ],
+            "aliases": {
+                "Exchanger": "Juanparati\\LaravelExchanger\\Facades\\ExchangerConverterFacade"
+            }
         }
     },
     "autoload": {

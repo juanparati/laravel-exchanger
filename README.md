@@ -9,11 +9,11 @@ A Laravel currency converter library that uses [florianv/exchanger](https://gith
 
     composer require juanparati/laravel-exchanger
 
-Facade registration (optional):
+The "Exchanger" facade alias is automatically registered. A custom alias can be registered manually (optional):
 
     'aliases' => [
         ...
-        'CurrencyExchanger' => \Juanparati\LaravelExchanger\Facades\ExchangerConverterFacade,
+        'CurrencyExchanger' => \Juanparati\LaravelExchanger\Facades\ExchangerConverterFacade::class,
         ...
     ]
 
@@ -53,12 +53,49 @@ It's important to provide a valid cache time (in seconds) in order to avoid dupl
     CurrencyExchanger::getLastExchangeRateResult();
 
 
+### Fluent conversions
+
+Conversions can also be expressed fluently, starting the chain with "from" or with "convert" without arguments:
+
+    CurrencyExchanger::from('usd')
+        ->to('eur')
+        ->amount(100)
+        ->round(2)
+        ->get();                     // Converted amount as float
+
+    CurrencyExchanger::convert()
+        ->from('usd')
+        ->to('eur')
+        ->get();                     // Amount defaults to 1, so it returns the rate
+
+Historical rates are available through the "date" method (accepts a date string or a DateTimeInterface):
+
+    CurrencyExchanger::from('nok')->to('sek')->date('2020-01-01')->get();
+
+Use "rate" instead of "get" in order to obtain the Exchanger\ExchangeRate object:
+
+    $rate = CurrencyExchanger::from('eur')->to('dkk')->rate();
+    $rate->getValue();
+    $rate->getProviderName();
+
+Additional methods:
+
+    CurrencyExchanger::from('eur')
+        ->to('dkk')
+        ->using(\Exchanger\Service\EuropeanCentralBank::class) // Use only the given services for this conversion
+        ->withoutCache()                                       // Skip the cache for this conversion
+        ->when($someCondition, fn ($c) => $c->round(2))        // Conditional chaining (also "unless")
+        ->get();
+
+The "using" and "withoutCache" options only apply to the current conversion; the attached services and cache state are restored afterwards.
+
+
 ### Cache state
 
 Is sometimes convenient to disable the cache in order of force to request the most recent rate or conversion. In order to achieve that is possible to disable temporally the cache:
 
-    CurrencyExchanger::setCacheStatus(false); // Cache disabled
-    CurrencyExchanger::setCacheStatus(true);  // Cache enabled
+    CurrencyExchanger::setCacheUsage(false); // Cache disabled
+    CurrencyExchanger::setCacheUsage(true);  // Cache enabled
 
 Remember that cache is always enabled by default when the configuration key "cache_time" has a valid integer.
 
