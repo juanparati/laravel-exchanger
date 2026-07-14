@@ -106,30 +106,13 @@ class ExchangerConverter
 
 
     /**
-     * Convert between different currencies.
+     * Start a fluent conversion.
      *
-     * Called without arguments it returns a fluent conversion builder.
-     *
-     * @param string|null $fromCurrency
-     * @param string|null $toCurrency
-     * @param $value
-     * @param \DateTimeInterface|null $rateDate
-     * @return float|PendingConversion
-     * @throws \Exchanger\Exception\ChainException
-     * @throws \Throwable
+     * @return PendingConversion
      */
-    public function convert(
-        ?string $fromCurrency = null,
-        ?string $toCurrency = null,
-        $value = null,
-        ?\DateTimeInterface $rateDate = null
-    ): float|PendingConversion
+    public function convert(): PendingConversion
     {
-        if (func_num_args() === 0)
-            return new PendingConversion($this);
-
-        $rate = $this->getRate($fromCurrency, $toCurrency, $rateDate);
-        return $rate->getValue() * $value;
+        return new PendingConversion($this);
     }
 
 

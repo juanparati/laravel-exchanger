@@ -78,8 +78,7 @@ class FluentConversionTest extends TestCase
 
 
     /**
-     * Test that convert() without arguments returns the fluent builder
-     * and keeps the classic behavior when called with arguments.
+     * Test that convert() returns the fluent builder.
      *
      * @throws \Throwable
      */
@@ -92,9 +91,6 @@ class FluentConversionTest extends TestCase
             5.0,
             $exchanger->convert()->from('eur')->to('eur')->amount(5)->get()
         );
-
-        // Classic call style still works
-        $this->assertEquals(5.0, $exchanger->convert('eur', 'eur', 5));
     }
 
 

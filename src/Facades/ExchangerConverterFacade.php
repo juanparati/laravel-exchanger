@@ -11,7 +11,7 @@ use Juanparati\LaravelExchanger\ExchangerConverter;
 /**
  * Class ExchangeConverter.
  *
- * @method static float|\Juanparati\LaravelExchanger\PendingConversion convert(?string $fromCurrency = null, ?string $toCurrency = null, $value = null, ?\DateTimeInterface $rateDate = null)
+ * @method static \Juanparati\LaravelExchanger\PendingConversion convert()
  * @method static \Juanparati\LaravelExchanger\PendingConversion from(string $currency)
  * @method static \Exchanger\Contract\ExchangeRate getRate(string $fromCurrency, string $toCurrency, ?\DateTimeInterface $rateDate = null)
  * @method static \Exchanger\Contract\ExchangeRate|null getLastExchangeRateResult()

@@ -44,18 +44,7 @@ It's important to provide a valid cache time (in seconds) in order to avoid dupl
 
 ### Convert currency
 
-    CurrencyExchanger::convert('ron', 'dkk', 10); // Convert 10 RON to DKK and return as float
-
-    // Historical conversion rate 
-    CurrencyExchanger::convert('ron', 'dkk', 10, now()->subDays(5));
-
-    // Obtain the last rate (Exchanger\ExchangeRate) for the previous currency conversion
-    CurrencyExchanger::getLastExchangeRateResult();
-
-
-### Fluent conversions
-
-Conversions can also be expressed fluently, starting the chain with "from" or with "convert" without arguments:
+Conversions are expressed fluently, starting the chain with "from" or with "convert":
 
     CurrencyExchanger::from('usd')
         ->to('eur')
@@ -88,6 +77,10 @@ Additional methods:
         ->get();
 
 The "using" and "withoutCache" options only apply to the current conversion; the attached services and cache state are restored afterwards.
+
+The last rate (Exchanger\ExchangeRate) used by a conversion is available afterwards:
+
+    CurrencyExchanger::getLastExchangeRateResult();
 
 
 ### Cache state
