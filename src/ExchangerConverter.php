@@ -120,7 +120,7 @@ class ExchangerConverter
         string $fromCurrency,
         string $toCurrency,
         $value,
-        \DateTimeInterface $rateDate = null
+        ?\DateTimeInterface $rateDate = null
     ): float
     {
         $rate = $this->getRate($fromCurrency, $toCurrency, $rateDate);
@@ -141,7 +141,7 @@ class ExchangerConverter
     public function getRate(
         string $fromCurrency,
         string $toCurrency,
-        \DateTimeInterface $rateDate = null
+        ?\DateTimeInterface $rateDate = null
     ) : ExchangeRate {
         $currencyPair = new CurrencyPair(strtoupper($fromCurrency), strtoupper($toCurrency));
 
