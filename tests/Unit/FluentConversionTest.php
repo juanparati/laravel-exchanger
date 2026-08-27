@@ -1,152 +1,106 @@
 <?php
 declare(strict_types=1);
 
-namespace Juanparati\LaravelExchanger\Tests\Unit;
-
 use Exchanger\Service\EuropeanCentralBank;
 use Juanparati\LaravelExchanger\Exceptions\ExchangerException;
 use Juanparati\LaravelExchanger\ExchangerConverter;
 use Juanparati\LaravelExchanger\PendingConversion;
-use Juanparati\LaravelExchanger\Providers\ExchangerServiceProvider;
-use Orchestra\Testbench\TestCase;
 
 
-/**
- * Class FluentConversionTest.
- *
- * @package Juanparati\LaravelExchanger\Tests\Unit
- */
-class FluentConversionTest extends TestCase
-{
+beforeEach(function () {
+    config()->set('exchanger.services', [
+        EuropeanCentralBank::class => [],
+    ]);
 
-    /**
-     * Load service providers.
-     *
-     * @param \Illuminate\Foundation\Application $app
-     * @return string[]
-     */
-    protected function getPackageProviders($app)
-    {
-        return [ExchangerServiceProvider::class];
-    }
+    config()->set('exchanger.cache_time', 60);
+    config()->set('exchanger.cache_store', 'array');
+
+    $this->exchanger = $this->app->make(ExchangerConverter::class);
+});
 
 
-    /**
-     * Prepare the environment and configuration.
-     *
-     * @param \Illuminate\Foundation\Application $app
-     */
-    protected function getEnvironmentSetUp($app) {
-        $app['config']->set('exchanger.services', [
-            EuropeanCentralBank::class => [],
-        ]);
+describe('fluent conversion', function () {
 
-        $app['config']->set('exchanger.cache_time', 60);
-        $app['config']->set('exchanger.cache_store', 'array');
-    }
+    it('converts an identical currency pair without network access', function () {
+        expect($this->exchanger->from('eur')->to('eur')->amount(5)->getValue())
+            ->toBe(5.0);
+    });
 
 
-    /**
-     * Test fluent conversion started with from().
-     *
-     * @throws \Throwable
-     */
-    public function testFluentConversion() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
+    it('converts using a live rate and rounds on demand', function () {
+        $eurToDkk = $this->exchanger->from('eur')->to('dkk')->amount(100)->getValue();
 
-        // Identical pair (no network required)
-        $this->assertEquals(5.0, $exchanger->from('eur')->to('eur')->amount(5)->get());
-
-        // Live ECB conversion
-        $eurToDkk = $exchanger->from('eur')->to('dkk')->amount(100)->get();
-        $this->assertGreaterThan(0, $eurToDkk);
-
-        // Rounding
-        $rounded = $exchanger->from('eur')->to('dkk')->amount(100)->round(2)->get();
-        $this->assertEquals(round($eurToDkk, 2), $rounded);
-
-        // Historical rate (ECB only supports EUR-based pairs)
-        $historical = $exchanger->from('eur')->to('dkk')->date('2015-04-20')->get();
-        $this->assertGreaterThan(0, $historical);
-        $this->assertNotEquals($eurToDkk / 100, $historical);
-
-        // Rate object terminal
-        $rate = $exchanger->from('eur')->to('dkk')->rate();
-        $this->assertGreaterThan(0, $rate->getValue());
-        $this->assertEquals('european_central_bank', $rate->getProviderName());
-    }
+        expect($eurToDkk)->toBeGreaterThan(0)
+            ->and($this->exchanger->from('eur')->to('dkk')->amount(100)->round(2)->getValue())
+            ->toEqual(round($eurToDkk, 2));
+    });
 
 
-    /**
-     * Test that convert() returns the fluent builder.
-     *
-     * @throws \Throwable
-     */
-    public function testConvertEntryPoint() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
+    it('converts using a historical rate', function () {
+        $current    = $this->exchanger->from('eur')->to('dkk')->getValue();
+        $historical = $this->exchanger->from('eur')->to('dkk')->date('2015-04-20')->getValue();
 
-        $this->assertInstanceOf(PendingConversion::class, $exchanger->convert());
-
-        $this->assertEquals(
-            5.0,
-            $exchanger->convert()->from('eur')->to('eur')->amount(5)->get()
-        );
-    }
+        expect($historical)->toBeGreaterThan(0)
+            ->and($historical)->not->toEqual($current);
+    });
 
 
-    /**
-     * Test the per-conversion service selection and state restoration.
-     *
-     * @throws \Throwable
-     */
-    public function testUsingRestoresServices() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
+    it('exposes the rate object as a terminal', function () {
+        $rate = $this->exchanger->from('eur')->to('dkk')->rate();
 
-        $exchanger->attachAll();
-        $previousServices = $exchanger->getAttachedServices();
+        expect($rate->getValue())->toBeGreaterThan(0)
+            ->and($rate->getProviderName())->toBe('european_central_bank');
+    });
+});
 
-        $result = $exchanger->from('eur')
+
+describe('entry points', function () {
+
+    it('starts a fluent conversion from convert()', function () {
+        expect($this->exchanger->convert())->toBeInstanceOf(PendingConversion::class)
+            ->and($this->exchanger->convert()->from('eur')->to('eur')->amount(5)->getValue())
+            ->toBe(5.0);
+    });
+});
+
+
+describe('per-conversion state', function () {
+
+    it('restores the attached services after using()', function () {
+        $this->exchanger->attachAll();
+        $previousServices = $this->exchanger->getAttachedServices();
+
+        $result = $this->exchanger->from('eur')
             ->to('dkk')
             ->using(EuropeanCentralBank::class)
-            ->get();
+            ->getValue();
 
-        $this->assertGreaterThan(0, $result);
-        $this->assertEquals($previousServices, $exchanger->getAttachedServices());
-    }
+        expect($result)->toBeGreaterThan(0)
+            ->and($this->exchanger->getAttachedServices())->toBe($previousServices);
+    });
 
 
-    /**
-     * Test conditional chaining and cache bypass.
-     *
-     * @throws \Throwable
-     */
-    public function testConditionalAndCache() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
-
-        $amount = $exchanger->from('eur')
+    it('applies conditional chaining with when()', function () {
+        $amount = $this->exchanger->from('eur')
             ->to('eur')
             ->when(true, fn (PendingConversion $c) => $c->amount(10))
             ->when(false, fn (PendingConversion $c) => $c->amount(999))
-            ->get();
+            ->getValue();
 
-        $this->assertEquals(10.0, $amount);
-
-        $previousCache = $exchanger->getCacheUsage();
-        $exchanger->from('eur')->to('dkk')->withoutCache()->get();
-        $this->assertEquals($previousCache, $exchanger->getCacheUsage());
-    }
+        expect($amount)->toBe(10.0);
+    });
 
 
-    /**
-     * Test that missing currencies throw an exception.
-     *
-     * @throws \Throwable
-     */
-    public function testMissingCurrenciesThrows() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
+    it('restores the cache usage after withoutCache()', function () {
+        $previousCache = $this->exchanger->getCacheUsage();
 
-        $this->expectException(ExchangerException::class);
+        $this->exchanger->from('eur')->to('dkk')->withoutCache()->getValue();
 
-        $exchanger->from('eur')->get();
-    }
-}
+        expect($this->exchanger->getCacheUsage())->toBe($previousCache);
+    });
+});
+
+
+it('throws when the currencies are missing', function () {
+    $this->exchanger->from('eur')->getValue();
+})->throws(ExchangerException::class);

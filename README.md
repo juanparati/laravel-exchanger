@@ -1,4 +1,4 @@
-![](https://api.travis-ci.com/juanparati/laravel-exchanger.svg?branch=master)
+[![Tests](https://github.com/juanparati/laravel-exchanger/actions/workflows/tests.yml/badge.svg)](https://github.com/juanparati/laravel-exchanger/actions/workflows/tests.yml)
 
 # Laravel-Exchanger
 
@@ -20,7 +20,7 @@ The "Exchanger" facade alias is automatically registered. A custom alias can be 
 
 ## Configuration
 
-Publish configuration file:
+Publish the configuration file:
 
     artisan vendor:publish --provider="Juanparati\LaravelExchanger\Providers\ExchangerServiceProvider"
 
@@ -50,18 +50,18 @@ Conversions are expressed fluently, starting the chain with "from" or with "conv
         ->to('eur')
         ->amount(100)
         ->round(2)
-        ->get();                     // Converted amount as float
+        ->getValue();                 // Converted amount as float
 
     CurrencyExchanger::convert()
         ->from('usd')
         ->to('eur')
-        ->get();                     // Amount defaults to 1, so it returns the rate
+        ->getValue();                 // Amount defaults to 1, so it returns the rate
 
 Historical rates are available through the "date" method (accepts a date string or a DateTimeInterface):
 
-    CurrencyExchanger::from('nok')->to('sek')->date('2020-01-01')->get();
+    CurrencyExchanger::from('nok')->to('sek')->date('2020-01-01')->getValue();
 
-Use "rate" instead of "get" in order to obtain the Exchanger\ExchangeRate object:
+Use "rate" instead of "getValue" in order to obtain the Exchanger\ExchangeRate object:
 
     $rate = CurrencyExchanger::from('eur')->to('dkk')->rate();
     $rate->getValue();
@@ -74,7 +74,7 @@ Additional methods:
         ->using(\Exchanger\Service\EuropeanCentralBank::class) // Use only the given services for this conversion
         ->withoutCache()                                       // Skip the cache for this conversion
         ->when($someCondition, fn ($c) => $c->round(2))        // Conditional chaining (also "unless")
-        ->get();
+        ->getValue();
 
 The "using" and "withoutCache" options only apply to the current conversion; the attached services and cache state are restored afterwards.
 
@@ -103,7 +103,7 @@ It's possible to attach and detach services on demand:
     // Attach service
     CurrencyExchanger::attach(\Exchanger\Service\Cryptonator::class);
 
-By default all the services registered into the configuration are attached by default.
+By default, all the services registered into the configuration are attached by default.
 
 
 ### Execute custom queries
@@ -111,5 +111,5 @@ By default all the services registered into the configuration are attached by de
 Because this library works as a wrapper for [florianv/exchanger](https://github.com/florianv/exchanger) it's possible to execute custom queries passing the build query to the "executeQuery" method.
 
     ...
-    CurrencyExchanger::executeQuery($query->build);
+    CurrencyExchanger::executeQuery($query->build());
     ...

@@ -6,6 +6,7 @@ namespace Juanparati\LaravelExchanger;
 
 use Exchanger\Contract\ExchangeRate;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Number;
 use Illuminate\Support\Traits\Conditionable;
 use Juanparati\LaravelExchanger\Exceptions\ExchangerException;
 
@@ -178,7 +179,7 @@ class PendingConversion
 
 
     /**
-     * Obtain the exchange rate information.
+     * Get the exchange rate information.
      *
      * @return ExchangeRate
      * @throws ExchangerException
@@ -197,13 +198,13 @@ class PendingConversion
 
 
     /**
-     * Obtain the converted amount.
+     * Get the converted amount.
      *
      * @return float
      * @throws ExchangerException
      * @throws \Throwable
      */
-    public function get() : float {
+    public function getValue() : float {
         $value = $this->rate()->getValue() * $this->amount;
 
         return $this->round === null ? $value : round($value, $this->round);

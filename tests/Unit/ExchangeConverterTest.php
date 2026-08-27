@@ -1,125 +1,96 @@
 <?php
 declare(strict_types=1);
 
-namespace Juanparati\LaravelExchanger\Tests\Unit;
-
-use Exchanger\Service\Fixer;
+use Exchanger\Service\EuropeanCentralBank;
+use Exchanger\Service\NationalBankOfDenmark;
+use Exchanger\Service\NationalBankOfRomania;
 use Illuminate\Support\Carbon;
 use Juanparati\LaravelExchanger\ExchangerConverter;
-use Juanparati\LaravelExchanger\Providers\ExchangerServiceProvider;
-use Orchestra\Testbench\TestCase;
 
 
-/**
- * Class ExchangeConverterTest.
- *
- * @package Juanparati\LaravelExchanger\Tests\Unit
- */
-class ExchangeConverterTest extends TestCase
-{
+beforeEach(function () {
+    config()->set('exchanger.services', [
+        EuropeanCentralBank::class   => [],
+        NationalBankOfDenmark::class => [],
+        NationalBankOfRomania::class => [],
+    ]);
 
-    /**
-     * Load service providers.
-     *
-     * @param \Illuminate\Foundation\Application $app
-     * @return string[]
-     */
-    protected function getPackageProviders($app)
-    {
-        return [ExchangerServiceProvider::class];
-    }
+    $this->exchanger = $this->app->make(ExchangerConverter::class);
+});
 
 
+describe('rates and conversions', function () {
 
-    /**
-     * Prepare the environment and configuration.
-     *
-     * @param \Illuminate\Foundation\Application $app
-     */
-    protected function getEnvironmentSetUp($app) {
-        $app['config']->set('exchanger.services', [
-            \Exchanger\Service\EuropeanCentralBank::class   => [],
-            \Exchanger\Service\Fixer::class                 => ['access_key' => env('FIXER_KEY'), 'enterprise' => true],
-            \Exchanger\Service\NationalBankOfRomania::class => [],
-        ]);
-    }
+    it('returns the amount unchanged for an identical currency pair', function () {
+        expect($this->exchanger->from('eur')->to('eur')->amount(1)->getValue())
+            ->toBe(1.0);
+    });
 
 
-    /**
-     * Test basic rate and conversion.
-     *
-     * @throws \Exchanger\Exception\ChainException
-     * @throws \Throwable
-     */
-    public function testRateAndConversion() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
+    it('converts EUR to DKK and back', function () {
+        $eurToDkk = $this->exchanger->from('eur')->to('dkk')->amount(1)->getValue();
 
-        // Test equal equivalence
-        $this->assertEquals(1, $exchanger->from('eur')->to('eur')->amount(1)->get());
-
-        // Test EUR to DKK (European Central bank)
-        $eurToDkk = $exchanger->from('eur')->to('dkk')->amount(1)->get();
-        $this->assertGreaterThan(0, $eurToDkk);
-
-        // Test DKK to EUR (FIXER)
-        $this->assertEquals(1, round($exchanger->from('dkk')->to('eur')->amount($eurToDkk)->get()));
-
-        // Test RON to DKK
-        $ronToDKK = $exchanger->from('ron')->to('dkk')->amount(100)->get();
-        $this->assertGreaterThan(0, $ronToDKK);
-
-        // Test DKK to RON
-        $this->assertEquals(100, round($exchanger->from('dkk')->to('ron')->amount($ronToDKK)->get()));
-
-        // Test historical PLN to NOK
-        $this->assertEquals(
-            1.4158950000000001,
-            $exchanger->from('nok')->to('pln')->amount(3)->date(Carbon::createFromDate(2015, 4, 20))->get()
-        );
-    }
+        expect($eurToDkk)->toBeGreaterThan(0)
+            ->and(round($this->exchanger->from('dkk')->to('eur')->amount($eurToDkk)->getValue()))
+            ->toEqual(1.0);
+    });
 
 
-    /**
-     * Test if the last exchange results correspond with the last exchange rate result.
-     *
-     * @throws \Exchanger\Exception\ChainException
-     * @throws \Throwable
-     */
-    public function testLastExchangeRate() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
+    it('converts RON to DKK and back', function () {
+        $ronToDkk = $this->exchanger->from('ron')->to('dkk')->amount(100)->getValue();
 
-        $this->assertGreaterThan(0, $exchanger->getRate('eur', 'pln')->getValue());
-        $this->assertEquals('european_central_bank', $exchanger->getLastExchangeRateResult()->getProviderName());
-
-        $exchanger->detach(Fixer::class);
-
-        $this->assertGreaterThan(0, $exchanger->getRate('ron', 'pln')->getValue());
-        $this->assertEquals('national_bank_of_romania', $exchanger->getLastExchangeRateResult()->getProviderName());
-
-        $this->assertEquals(1.0892, $exchanger->getRate(
-            'eur', 'usd',
-            Carbon::createFromDate(2024, 3, 15)
-        )->getValue());
-
-    }
+        expect($ronToDkk)->toBeGreaterThan(0)
+            ->and(round($this->exchanger->from('dkk')->to('ron')->amount($ronToDkk)->getValue()))
+            ->toEqual(100.0);
+    });
 
 
-    /**
-     * Test detach and attach.
-     *
-     * @throws \Exchanger\Exception\ChainException
-     * @throws \Throwable
-     */
-    public function testDetachAndAttach() {
-        $exchanger = $this->app->make(ExchangerConverter::class);
+    it('converts using a historical rate', function () {
+        $historical = $this->exchanger->from('eur')
+            ->to('pln')
+            ->amount(3)
+            ->date(Carbon::createFromDate(2015, 4, 20))
+            ->getValue();
 
-        $exchanger->detachAll();
+        expect($historical)->toEqualWithDelta(3 * 3.9891, 1e-6);
+    });
+});
 
-        $exchanger->attach(Fixer::class);
 
-        $rate = $exchanger->getRate('pln', 'sek');
+describe('last exchange rate result', function () {
 
-        $this->assertGreaterThan(0, $rate->getValue());
-        $this->assertEquals('fixer', $rate->getProviderName());
-    }
-}
+    it('reports the provider that resolved the rate', function () {
+        expect($this->exchanger->getRate('eur', 'pln')->getValue())->toBeGreaterThan(0)
+            ->and($this->exchanger->getLastExchangeRateResult()->getProviderName())
+            ->toBe('european_central_bank');
+    });
+
+
+    it('falls back to the next provider in the chain after a detach', function () {
+        $this->exchanger->detach(NationalBankOfDenmark::class);
+
+        expect($this->exchanger->getRate('ron', 'pln')->getValue())->toBeGreaterThan(0)
+            ->and($this->exchanger->getLastExchangeRateResult()->getProviderName())
+            ->toBe('national_bank_of_romania');
+    });
+
+
+    it('retrieves historical rates', function () {
+        $rate = $this->exchanger->getRate('eur', 'usd', Carbon::createFromDate(2024, 3, 15));
+
+        expect($rate->getValue())->toEqualWithDelta(1.0892, 1e-6);
+    });
+});
+
+
+describe('service attachment', function () {
+
+    it('uses only the attached service after a detach all', function () {
+        $this->exchanger->detachAll()->attach(NationalBankOfDenmark::class);
+
+        $rate = $this->exchanger->getRate('pln', 'dkk');
+
+        expect($rate->getValue())->toBeGreaterThan(0)
+            ->and($rate->getProviderName())->toBe('national_bank_of_denmark');
+    });
+});
