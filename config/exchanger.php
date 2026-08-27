@@ -25,6 +25,7 @@ return [
         \Exchanger\Service\NationalBankOfRomania::class            => [],
         \Exchanger\Service\CentralBankOfRepublicTurkey::class      => [],
         \Exchanger\Service\CentralBankOfCzechRepublic::class       => [],
+        \Exchanger\Service\NationalBankOfDenmark::class            => [],
         // \Exchanger\Service\BulgarianNationalBank::class            => [],
         // \Exchanger\Service\CentralBankOfRepublicUzbekistan::class  => [],
         // \Exchanger\Service\NationalBankOfGeorgia::class            => [],
