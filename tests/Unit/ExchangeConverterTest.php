@@ -55,26 +55,26 @@ class ExchangeConverterTest extends TestCase
         $exchanger = $this->app->make(ExchangerConverter::class);
 
         // Test equal equivalence
-        $this->assertEquals(1, $exchanger->convert('eur', 'eur', 1));
+        $this->assertEquals(1, $exchanger->from('eur')->to('eur')->amount(1)->get());
 
         // Test EUR to DKK (European Central bank)
-        $eurToDkk = $exchanger->convert('eur', 'dkk', 1);
+        $eurToDkk = $exchanger->from('eur')->to('dkk')->amount(1)->get();
         $this->assertGreaterThan(0, $eurToDkk);
 
         // Test DKK to EUR (FIXER)
-        $this->assertEquals(1, round($exchanger->convert('dkk', 'eur', $eurToDkk)));
+        $this->assertEquals(1, round($exchanger->from('dkk')->to('eur')->amount($eurToDkk)->get()));
 
         // Test RON to DKK
-        $ronToDKK = $exchanger->convert('ron', 'dkk', 100);
+        $ronToDKK = $exchanger->from('ron')->to('dkk')->amount(100)->get();
         $this->assertGreaterThan(0, $ronToDKK);
 
         // Test DKK to RON
-        $this->assertEquals(100, round($exchanger->convert('dkk', 'ron', $ronToDKK)));
+        $this->assertEquals(100, round($exchanger->from('dkk')->to('ron')->amount($ronToDKK)->get()));
 
         // Test historical PLN to NOK
         $this->assertEquals(
             1.4158950000000001,
-            $exchanger->convert('nok', 'pln', 3, Carbon::createFromDate(2015, 4, 20))
+            $exchanger->from('nok')->to('pln')->amount(3)->date(Carbon::createFromDate(2015, 4, 20))->get()
         );
     }
 

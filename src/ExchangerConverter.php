@@ -106,25 +106,25 @@ class ExchangerConverter
 
 
     /**
-     * Convert between different currencies.
+     * Start a fluent conversion.
      *
-     * @param string $fromCurrency
-     * @param string $toCurrency
-     * @param $value
-     * @param \DateTimeInterface|null $rateDate
-     * @return float
-     * @throws \Exchanger\Exception\ChainException
-     * @throws \Throwable
+     * @return PendingConversion
      */
-    public function convert(
-        string $fromCurrency,
-        string $toCurrency,
-        $value,
-        \DateTimeInterface $rateDate = null
-    ): float
+    public function convert(): PendingConversion
     {
-        $rate = $this->getRate($fromCurrency, $toCurrency, $rateDate);
-        return $rate->getValue() * $value;
+        return new PendingConversion($this);
+    }
+
+
+    /**
+     * Start a fluent conversion from the given currency.
+     *
+     * @param string $currency
+     * @return PendingConversion
+     */
+    public function from(string $currency) : PendingConversion
+    {
+        return (new PendingConversion($this))->from($currency);
     }
 
 
@@ -141,7 +141,7 @@ class ExchangerConverter
     public function getRate(
         string $fromCurrency,
         string $toCurrency,
-        \DateTimeInterface $rateDate = null
+        ?\DateTimeInterface $rateDate = null
     ) : ExchangeRate {
         $currencyPair = new CurrencyPair(strtoupper($fromCurrency), strtoupper($toCurrency));
 
@@ -263,6 +263,26 @@ class ExchangerConverter
         $this->createChainInstance();
 
         return $this;
+    }
+
+
+    /**
+     * Obtain the list of currently attached services.
+     *
+     * @return string[]
+     */
+    public function getAttachedServices() : array {
+        return array_keys($this->serviceList);
+    }
+
+
+    /**
+     * Return the cache usage status.
+     *
+     * @return bool
+     */
+    public function getCacheUsage() : bool {
+        return $this->cacheMatcher->getCacheStatus();
     }
 
 
